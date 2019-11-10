@@ -19,20 +19,23 @@ class ToggleButton extends React.Component {
   }
 }
 
-class ProductRow extends React.Component {
-  render() {
+function ProductRow(props) {
     return (
-      <tr><td>{this.props.name}</td></tr>
+      <tr onClick = {props.handleClick} className={props.isClicked ? "bold" : ""}><td>{props.name}</td></tr>
     )
-  }
 }
 
 class ProductTable extends React.Component {
   render() {
     const productRows = [];
-
     for (let i = 0; i < this.props.products.length; i++){
-      productRows[i] = <ProductRow key={"product-row-" + i} name={this.props.products[i].name}/>;
+      const clicked = isClicked(this.props.products[i].name, this.props.selectedProducts)
+      productRows[i] = <ProductRow
+                          key={"product-row-" + i}
+                          name={this.props.products[i].name}
+                          handleClick={() => this.props.handleClick(i)}
+                          isClicked={clicked}
+                        />;
     }
 
     return(
@@ -49,7 +52,7 @@ class QuantityCounter extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      counter: 1,
+      counter: this.props.quantity,
     };
 
     this.handleClick = this.handleClick.bind(this);
@@ -86,7 +89,7 @@ class QuantityCounter extends React.Component {
 
 class ShoppingListRow extends React.Component {
   constructor(props) {
-    super()
+    super(props)
     this.state = {
       hover: false,
     }
@@ -103,15 +106,13 @@ class ShoppingListRow extends React.Component {
   }
 
   render() {
-  //  const hidden = this.state.hover ? "" : " hidden"
-
     return (
       <tr
         onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave}
       >
-        <td>{this.props.name}</td>
-        <td className="counter-table"><QuantityCounter hover={this.state.hover}/></td>
+        <td onClick={this.props.handleClick}>{this.props.name}</td>
+        <td className="counter-table"><QuantityCounter hover={this.state.hover} quantity={this.props.quantity}/></td>
       </tr>
     )
   }
@@ -122,7 +123,12 @@ class ShoppingList extends React.Component {
     const productRows = [];
 
     for (let i = 0; i < this.props.products.length; i++){
-      productRows[i] = <ShoppingListRow key={"product-row-" + i} name={this.props.products[i].name}/>;
+      productRows[i] = <ShoppingListRow
+                          key={"product-row-" + i}
+                          name={this.props.products[i].name}
+                          quantity={this.props.products[i].quantity}
+                          handleClick={() => this.props.handleClick(i)}
+                        />;
     }
 
     return (
@@ -136,6 +142,31 @@ class ShoppingList extends React.Component {
 }
 
 class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedProducts: [
+        {name: "cebula", quantity:5},
+        {name: "woda", quantity:1}
+      ],
+    }
+  }
+
+  selectingProduct(i) {
+    const selectedProduct = [{name: this.props.products[i].name, quantity: 1}]
+    if (!isClicked(selectedProduct[0].name, this.state.selectedProducts)){
+      this.setState({selectedProducts: this.state.selectedProducts.concat(selectedProduct)})
+    }
+  }
+
+  removeProduct(i) {
+    const updatedList1 = this.state.selectedProducts.slice(0, i);
+    const updatedList2 = this.state.selectedProducts.slice(i+1);
+    const updatedList = updatedList1.concat(updatedList2);
+    console.log(updatedList);
+    this.setState({selectedProducts: updatedList});
+  }
+
   render() {
     return (
       <div className="container" id="app">
@@ -152,19 +183,35 @@ class App extends React.Component {
             <SearchBar />
             <div className="row justify-content-around"><ToggleButton label="All" /><ToggleButton  label="Single"/><ToggleButton  label="Set"/></div>
             <div className="product-list-height-const smooth-scroll">
-            <ProductTable products={this.props.products} />
+              <ProductTable
+                products={this.props.products}
+                handleClick={(i) => this.selectingProduct(i)}
+                selectedProducts={this.state.selectedProducts}
+              />
             </div>
           </div>
           <div className="col-6">
             <p className="text-center">Shopping List Preview</p>
               <div className="shopping-list-height-const">
-                <ShoppingList products={this.props.products} />
+                <ShoppingList
+                  products={this.state.selectedProducts}
+                  handleClick={(i) => this.removeProduct(i)}
+                />
               </div>
           </div>
         </div>
       </div>
     );
   }
+}
+
+function isClicked(name, list) {
+  for (let i= 0; i < list.length; i++) {
+    if (list[i].name === name) {
+      return true
+    }
+  }
+  return false
 }
 
 const PRODUCTS = [
