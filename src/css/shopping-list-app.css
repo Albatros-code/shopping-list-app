@@ -71,3 +71,31 @@ body {
 .bold {
   font-weight: bold;
 }
+
+.list-description {
+  font-size: 10px;
+  font-weight: 100;
+  margin-left: 5px;
+  margin-bottom: 0px;
+  -text-align: justify;
+}
+
+.btn-look {
+  background: lightgrey;
+  border: 0px;
+}
+
+.btn-toggled {
+  background: grey;
+  color: white;
+}
+
+.list-filter-buttons {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.btn.focus, .btn:focus {
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(255,255,0,.25);
+}

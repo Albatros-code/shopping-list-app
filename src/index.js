@@ -4,17 +4,35 @@ import './css/bootstrap.min.css';
 import './css/shopping-list-app.css';
 
 class SearchBar extends React.Component {
+  constructor(props){
+    super(props);
+
+    this.handleFilterTextChange = this.handleFilterTextChange.bind(this);
+  }
+
+  handleFilterTextChange(e) {
+    this.props.filterText(e.target.value);
+  }
+
   render() {
     return (
-      <input type="text" placeholder="Search..." className="form-control"/>
+      <input
+        type="text"
+        placeholder="Search..."
+        className="form-control"
+        value={this.props.value}
+        onChange={(e) => this.handleFilterTextChange(e)}
+      />
     )
   }
 }
 
 class ToggleButton extends React.Component {
   render(){
+    const  btnToggled = this.props.toggleButton.toLowerCase() === this.props.label.toLowerCase() ? " btn-toggled" : "";
+
     return (
-      <button  type="button" className="btn btn-secondary">{this.props.label}</button>
+      <button  type="button" className={"btn btn-look" +  btnToggled} onClick={(label) => this.props.handleClick(this.props.label)}>{this.props.label}</button>
     )
   }
 }
@@ -29,13 +47,22 @@ class ProductTable extends React.Component {
   render() {
     const productRows = [];
     for (let i = 0; i < this.props.products.length; i++){
-      const clicked = isClicked(this.props.products[i].name, this.props.selectedProducts)
-      productRows[i] = <ProductRow
-                          key={"product-row-" + i}
-                          name={this.props.products[i].name}
-                          handleClick={() => this.props.handleClick(i)}
-                          isClicked={clicked}
-                        />;
+
+      if (
+        this.props.products[i].name.toLowerCase().includes(this.props.filterText.toLowerCase()) &&
+
+        (this.props.toggleButton === "all" ||
+        this.props.toggleButton === this.props.products[i].category.toLowerCase())
+      ){
+
+        const clicked = isClicked(this.props.products[i].name, this.props.selectedProducts)
+        productRows[i] = <ProductRow
+                            key={"product-row-" + i}
+                            name={this.props.products[i].name}
+                            handleClick={() => this.props.handleClick(i)}
+                            isClicked={clicked}
+                          />;
+      }
     }
 
     return(
@@ -82,12 +109,33 @@ class ShoppingListRow extends React.Component {
   }
 
   render() {
+    let content = ""
+    if (this.props.type === "Single") {
+      content = this.props.name;
+    } else {
+      const index = findIndexByName(this.props.name, this.props.products);
+      const product = this.props.products[index];
+      var components = "";
+
+      for (let i = 1; i < 10; i++) {
+        if (product.hasOwnProperty("ingNam" + i)) {
+          components = components + (product["ingNam" + i] + "\u00A0" + product["ingQty" + i]+ ",\u00A0")
+
+        } else {
+          break;
+        }
+      }
+      content = <span>{this.props.name}
+                  <p className="list-description">{components}</p>
+                </span>;
+    }
+
     return (
       <tr
         onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave}
       >
-        <td onClick={this.props.handleClick}>{this.props.name}</td>
+        <td onClick={this.props.handleClick}>{content}</td>
         <td className="counter-table">
           <QuantityCounter
             hover={this.state.hover}
@@ -102,25 +150,43 @@ class ShoppingListRow extends React.Component {
 }
 
 class ShoppingList extends React.Component {
+
+  whatRowType(i) {
+     const productName = this.props.selectedProducts[i].name;
+     const products = this.props.products;
+     for (let i = 0; i < products.length; i++) {
+       if (products[i].name === productName) {
+         return products[i].category;
+       }
+     }
+   }
+
+   compareByName(a, b) {
+     if ( a.props.name < b.props.name ){
+       return -1;
+     }
+     if ( a.props.name > b.props.name ){
+       return 1;
+     }
+     return 0;
+   }
+
   render () {
     const productRows = [];
-
-  /* whatRowType(i) {
-      const productName = this.props.selectedProducts[i].name;
-
-    }*/
-
     for (let i = 0; i < this.props.selectedProducts.length; i++){
       productRows[i] = <ShoppingListRow
                           key={"product-row-" + i}
                           name={this.props.selectedProducts[i].name}
                           quantity={this.props.selectedProducts[i].quantity}
-                        //  type={this.whatRowType(i)}
+                          type={this.whatRowType(i)}
                           handleClick={() => this.props.handleClick(i)}
                           counterChangeAdd={(action) => this.props.counterChange(i, "add")}
                           counterChangeRemove={(action) => this.props.counterChange(i, "remove")}
+                          products={PRODUCTS}
                         />;
     }
+
+    productRows.sort(this.compareByName);
 
     return (
       <table className="table table-hover table-sm">
@@ -137,9 +203,10 @@ class App extends React.Component {
     super(props);
     this.state = {
       selectedProducts: [
-        {name: "cebula", quantity:5},
-        {name: "woda", quantity:1}
+        //{name: "cebula", quantity:5},
       ],
+      toggleButton: "all",
+      filterText: "",
     }
   }
 
@@ -154,7 +221,6 @@ class App extends React.Component {
     const updatedList1 = this.state.selectedProducts.slice(0, i);
     const updatedList2 = this.state.selectedProducts.slice(i+1);
     const updatedList = updatedList1.concat(updatedList2);
-    console.log(updatedList);
     this.setState({selectedProducts: updatedList});
   }
 
@@ -172,6 +238,14 @@ class App extends React.Component {
     }
   }
 
+  filterText(input) {
+    this.setState({filterText: input});
+  }
+
+  toggleButton(label) {
+    this.setState({toggleButton: label.toLowerCase()});
+  }
+
   render() {
     return (
       <div className="container" id="app">
@@ -185,13 +259,21 @@ class App extends React.Component {
         <div className="row">
           <div className="col-6">
             <p className="text-center">Products</p>
-            <SearchBar />
-            <div className="row justify-content-around"><ToggleButton label="All" /><ToggleButton  label="Single"/><ToggleButton  label="Set"/></div>
-            <div className="product-list-height-const smooth-scroll">
+            <SearchBar
+              filterText={(input) => this.filterText(input)}
+              value={this.state.filterText}/>
+            <div className="row justify-content-around list-filter-buttons">
+              <ToggleButton label="All" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
+              <ToggleButton label="Single" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
+              <ToggleButton label="Set" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
+            </div>
+            <div className="product-list-height-const">
               <ProductTable
                 products={this.props.products}
                 handleClick={(i) => this.selectingProduct(i)}
                 selectedProducts={this.state.selectedProducts}
+                toggleButton={this.state.toggleButton}
+                filterText={this.state.filterText}
               />
             </div>
           </div>
@@ -221,7 +303,30 @@ function isClicked(name, list) {
   return false
 }
 
-const PRODUCTS = [
+function findIndexByName(name, list) {
+   for (let i = 0; i < list.length; i++) {
+     if (list[i].name === name) {
+       return i;
+     }
+   }
+ }
+
+function compareByName(a, b) {
+  if ( a.name < b.name ){
+    return -1;
+  }
+  if ( a.name > b.name ){
+    return 1;
+  }
+  return 0;
+}
+
+const productsInput = [
+  {category: 'Set', name: 'Curry z dynią',
+    ingNam1: 'Cebula', ingQty1: '1',
+    ingNam2: 'Czosnek', ingQty2: '1',
+    ingNam3: 'Pomidory w puszce', ingQty3: '1',
+    ingNam4: 'Mięso mielone', ingQty4: '1'},
   {category: 'Single', shopPosition1: '1', shopPosition2: '5', name: 'Chleb'},
   {category: 'Single', shopPosition1: '6', shopPosition2: '5', name: 'Mleko'},
   {category: 'Single', shopPosition1: '3', shopPosition2: '6', name: 'Woda'},
@@ -245,24 +350,12 @@ const PRODUCTS = [
     ingNam3: 'Pomidory w puszce', ingQty3: '1',
     ingNam4: 'Mięso mielone', ingQty4: '1'},
   {category: 'Set', name: 'Chilli S. Jurka',
-    ingNam1: 'Fasola', ingQty1: '2',
-    ingNam2: 'Papryka', ingQty2: '2',
-    ingNam3: 'Marchewka', ingQty3: '1',
-    ingNam4: 'Pieczarki', ingQty4: '10'},
-];
-
-const SETS = [
-  {category: 'Set', name: 'Spaghetti',
     ingNam1: 'Cebula', ingQty1: '1',
     ingNam2: 'Czosnek', ingQty2: '1',
     ingNam3: 'Pomidory w puszce', ingQty3: '1',
     ingNam4: 'Mięso mielone', ingQty4: '1'},
-  {category: 'Set', name: 'Chilli S. Jurka',
-    ingNam1: 'Fasola', ingQty1: '2',
-    ingNam2: 'Papryka', ingQty2: '2',
-    ingNam3: 'Marchewka', ingQty3: '1',
-    ingNam4: 'Pieczarki', ingQty4: '10'},
 ];
+const PRODUCTS = productsInput.sort(compareByName);
 
 // ========================================
 
