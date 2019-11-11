@@ -105,11 +105,17 @@ class ShoppingList extends React.Component {
   render () {
     const productRows = [];
 
-    for (let i = 0; i < this.props.products.length; i++){
+  /* whatRowType(i) {
+      const productName = this.props.selectedProducts[i].name;
+
+    }*/
+
+    for (let i = 0; i < this.props.selectedProducts.length; i++){
       productRows[i] = <ShoppingListRow
                           key={"product-row-" + i}
-                          name={this.props.products[i].name}
-                          quantity={this.props.products[i].quantity}
+                          name={this.props.selectedProducts[i].name}
+                          quantity={this.props.selectedProducts[i].quantity}
+                        //  type={this.whatRowType(i)}
                           handleClick={() => this.props.handleClick(i)}
                           counterChangeAdd={(action) => this.props.counterChange(i, "add")}
                           counterChangeRemove={(action) => this.props.counterChange(i, "remove")}
@@ -193,7 +199,8 @@ class App extends React.Component {
             <p className="text-center">Shopping List Preview</p>
               <div className="shopping-list-height-const">
                 <ShoppingList
-                  products={this.state.selectedProducts}
+                  selectedProducts={this.state.selectedProducts}
+                  products={this.props.products}
                   handleClick={(i) => this.removeProduct(i)}
                   counterChange={(i, action) => this.counterChange(i, action)}
                 />
@@ -232,6 +239,29 @@ const PRODUCTS = [
   {category: 'Single', shopPosition1: '9', shopPosition2: '7', name: 'Płatki Jaglane'},
   {category: 'Single', shopPosition1: '1', shopPosition2: '5', name: 'Pietruszka'},
   {category: 'Single', shopPosition1: '8', shopPosition2: '2', name: 'Szczypiorek'},
+  {category: 'Set', name: 'Spaghetti',
+    ingNam1: 'Cebula', ingQty1: '1',
+    ingNam2: 'Czosnek', ingQty2: '1',
+    ingNam3: 'Pomidory w puszce', ingQty3: '1',
+    ingNam4: 'Mięso mielone', ingQty4: '1'},
+  {category: 'Set', name: 'Chilli S. Jurka',
+    ingNam1: 'Fasola', ingQty1: '2',
+    ingNam2: 'Papryka', ingQty2: '2',
+    ingNam3: 'Marchewka', ingQty3: '1',
+    ingNam4: 'Pieczarki', ingQty4: '10'},
+];
+
+const SETS = [
+  {category: 'Set', name: 'Spaghetti',
+    ingNam1: 'Cebula', ingQty1: '1',
+    ingNam2: 'Czosnek', ingQty2: '1',
+    ingNam3: 'Pomidory w puszce', ingQty3: '1',
+    ingNam4: 'Mięso mielone', ingQty4: '1'},
+  {category: 'Set', name: 'Chilli S. Jurka',
+    ingNam1: 'Fasola', ingQty1: '2',
+    ingNam2: 'Papryka', ingQty2: '2',
+    ingNam3: 'Marchewka', ingQty3: '1',
+    ingNam4: 'Pieczarki', ingQty4: '10'},
 ];
 
 // ========================================
