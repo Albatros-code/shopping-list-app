@@ -136,7 +136,7 @@ class ShoppingListRow extends React.Component {
         onMouseLeave={this.handleMouseLeave}
       >
         <td onClick={this.props.handleClick}>{content}</td>
-        <td className="counter-table">
+        <td className="counter-table vertical-align-middle">
           <QuantityCounter
             hover={this.state.hover}
             quantity={this.props.quantity}
