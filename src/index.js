@@ -49,39 +49,15 @@ class ProductTable extends React.Component {
 }
 
 class QuantityCounter extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      counter: this.props.quantity,
-    };
-
-    this.handleClick = this.handleClick.bind(this);
-  }
-
-  handleClick(action) {
-    if (action === "add") {
-      let counter = this.state.counter;
-      this.setState({counter:counter + 1});
-    } else if (action === "remove") {
-      let counter = this.state.counter;
-      if (counter > 0) {
-        this.setState({counter:counter + -1});
-      } else {
-        counter = 0;
-      }
-    }
-  }
-
   render () {
     const hidden = this.props.hover ? "" : " hidden"
-
     return (
       <div className="row align-items-center">
         <div className={"col counter" + hidden}>
-          <div className="row counter-button counter-button-add" onClick={() => this.handleClick("add")}></div>
-          <div className="row counter-button counter-button-remove" onClick={() => this.handleClick("remove")}></div>
+          <div className="row counter-button counter-button-add" onClick={this.props.counterChangeAdd}></div>
+          <div className="row counter-button counter-button-remove" onClick={this.props.counterChangeRemove}></div>
         </div>
-        <div className="col counter scroll-offset">{this.state.counter}</div>
+        <div className="col counter scroll-offset">{this.props.quantity}</div>
       </div>
     )
   }
@@ -112,7 +88,14 @@ class ShoppingListRow extends React.Component {
         onMouseLeave={this.handleMouseLeave}
       >
         <td onClick={this.props.handleClick}>{this.props.name}</td>
-        <td className="counter-table"><QuantityCounter hover={this.state.hover} quantity={this.props.quantity}/></td>
+        <td className="counter-table">
+          <QuantityCounter
+            hover={this.state.hover}
+            quantity={this.props.quantity}
+            counterChangeAdd={this.props.counterChangeAdd}
+            counterChangeRemove={this.props.counterChangeRemove}
+          />
+        </td>
       </tr>
     )
   }
@@ -128,6 +111,8 @@ class ShoppingList extends React.Component {
                           name={this.props.products[i].name}
                           quantity={this.props.products[i].quantity}
                           handleClick={() => this.props.handleClick(i)}
+                          counterChangeAdd={(action) => this.props.counterChange(i, "add")}
+                          counterChangeRemove={(action) => this.props.counterChange(i, "remove")}
                         />;
     }
 
@@ -167,6 +152,20 @@ class App extends React.Component {
     this.setState({selectedProducts: updatedList});
   }
 
+  counterChange(i, action) {
+    const selectedProducts = this.state.selectedProducts.slice();
+    const counter = selectedProducts[i].quantity;
+    if (action === "add") {
+      selectedProducts[i].quantity = counter + 1;
+      this.setState({selectedProducts:selectedProducts});
+    } else if (action === "remove") {
+      if (counter > 0) {
+        selectedProducts[i].quantity = counter - 1
+        this.setState({selectedProducts:selectedProducts});
+      }
+    }
+  }
+
   render() {
     return (
       <div className="container" id="app">
@@ -196,6 +195,7 @@ class App extends React.Component {
                 <ShoppingList
                   products={this.state.selectedProducts}
                   handleClick={(i) => this.removeProduct(i)}
+                  counterChange={(i, action) => this.counterChange(i, action)}
                 />
               </div>
           </div>
