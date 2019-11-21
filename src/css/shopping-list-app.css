@@ -4,6 +4,7 @@ body {
 
 #app {
   width: 500px;
+  height: 550px;
   border: 1px solid grey;
   border-radius: 20px;
   margin-top: 30px;
@@ -18,6 +19,24 @@ body {
 
 .shopping-list-height-const {
   height: 376px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.only-products-list {
+  -height: 400px;
+  width: 250px;
+  background-color: white;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  -overflow-y: hidden;
+  border-radius: 10px;
+  border: 1px solid grey;
+  padding: 5px;
+}
+
+.height-300 {
+  height: 300px;
   overflow-x: hidden;
   overflow-y: scroll;
 }

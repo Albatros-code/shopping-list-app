@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import SendEmail from './email.js';
 import './css/bootstrap.min.css';
 import './css/shopping-list-app.css';
 
@@ -109,6 +110,7 @@ class ShoppingListRow extends React.Component {
   }
 
   render() {
+    /*========== single or set  ==========*/
     let content = ""
     if (this.props.type === "Single") {
       content = this.props.name;
@@ -117,7 +119,7 @@ class ShoppingListRow extends React.Component {
       const product = this.props.products[index];
       var components = "";
 
-      for (let i = 1; i < 10; i++) {
+      for (let i = 0; i < 10; i++) {
         if (product.hasOwnProperty("ingNam" + i)) {
           components = components + (product["ingNam" + i] + "\u00A0" + product["ingQty" + i]+ ",\u00A0")
 
@@ -198,6 +200,96 @@ class ShoppingList extends React.Component {
   }
 }
 
+class OnlyProductsRow extends React.Component {
+  render() {
+    const content = this.props.name;
+    const quantity = this.props.quantity;
+    return (
+      <tr>
+        <td>{content}</td>
+        <td>{quantity}</td>
+      </tr>
+    )
+  }
+}
+
+class OnlyProducts extends React.Component {
+  render() {
+    const products = this.props.products;
+    const selectedProducts = this.props.selectedProducts;
+    const onlyProductsList = [];
+
+    for (let i = 0; i < selectedProducts.length; i++){
+      let productIndex = findIndexByName(selectedProducts[i].name, products);
+
+      if (products[productIndex].category === "Single") {
+        onlyProductsList.push({
+                                name: selectedProducts[i].name,
+                                quantity: selectedProducts[i].quantity});
+      }
+    }
+
+    for (let i = 0; i < selectedProducts.length; i++){
+      let product = products[findIndexByName(selectedProducts[i].name, products)];
+
+      if (product.category === "Set") {
+
+        for (let j = 0; j < 10; j++) {
+          if (product.hasOwnProperty("ingNam" + j)) {
+            let ingNam = product["ingNam" + j];
+            let ingQty = product["ingQty" + j];
+            let selectedQty = selectedProducts[i].quantity;
+
+            if (isClicked(ingNam, onlyProductsList)){
+              onlyProductsList[findIndexByName(ingNam, onlyProductsList)].quantity += selectedQty * ingQty;
+
+            } else {
+              onlyProductsList.push({
+                                      name: ingNam,
+                                      quantity: ingQty * selectedQty});
+            }
+
+          } else {
+            break;
+          }
+        }
+
+      //  console.log(products[productIndex].ingNam2);
+      //  onlyProductsList.push({
+            //                    name: products[productIndex].ingNam0,
+              //                  quantity: products[productIndex].ingQty0});
+
+        //onlyProductsList[findIndexByName(products[productIndex].ingNam1, onlyProductsList)].quantity += 3;
+      }
+    }
+
+    const productRows = [];
+    for (let i = 0; i < onlyProductsList.length; i++){
+          productRows[i] = <OnlyProductsRow
+                            name = {onlyProductsList[i].name}
+                            quantity = {onlyProductsList[i].quantity}
+                            key = {"onlyProductRow" + i}
+                           />
+    }
+
+
+    return (
+      <div>
+        <div className="height-300">
+          <table className="table table-hover table-sm">
+            <tbody>
+              {productRows}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <SendEmail />
+        </div>
+      </div>
+    )
+  }
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -207,6 +299,7 @@ class App extends React.Component {
       ],
       toggleButton: "all",
       filterText: "",
+      previewShown: false
     }
   }
 
@@ -246,53 +339,96 @@ class App extends React.Component {
     this.setState({toggleButton: label.toLowerCase()});
   }
 
+  whatLabel() {
+    if (this.state.previewShown){
+      return "Back"
+    } else {
+      return "Preview"
+    }
+  }
+
+
+
   render() {
-    return (
-      <div className="container" id="app">
-        <div className="row">
-          <div className="col-12 text-center">
-            <h1 className="display-4">
-              Shopping List App
-            </h1>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-6">
-            <p className="text-center">Products</p>
-            <SearchBar
-              filterText={(input) => this.filterText(input)}
-              value={this.state.filterText}/>
-            <div className="row justify-content-around list-filter-buttons">
-              <ToggleButton label="All" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
-              <ToggleButton label="Single" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
-              <ToggleButton label="Set" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
-            </div>
-            <div className="product-list-height-const">
-              <ProductTable
-                products={this.props.products}
-                handleClick={(i) => this.selectingProduct(i)}
-                selectedProducts={this.state.selectedProducts}
-                toggleButton={this.state.toggleButton}
-                filterText={this.state.filterText}
-              />
-            </div>
-          </div>
-          <div className="col-6">
-            <p className="text-center">Shopping List Preview</p>
-              <div className="shopping-list-height-const">
-                <ShoppingList
-                  selectedProducts={this.state.selectedProducts}
-                  products={this.props.products}
-                  handleClick={(i) => this.removeProduct(i)}
-                  counterChange={(i, action) => this.counterChange(i, action)}
-                />
+    const clear = [];
+    let contentToShow = <div>oko</div>
+    if (!this.state.previewShown) {
+      contentToShow =
+            <div className="row" >
+              <div className="col-6">
+                <p className="text-center">Products</p>
+                <SearchBar
+                  filterText={(input) => this.filterText(input)}
+                  value={this.state.filterText}/>
+                <div className="row justify-content-around list-filter-buttons">
+                  <ToggleButton label="All" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
+                  <ToggleButton label="Single" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
+                  <ToggleButton label="Set" toggleButton={this.state.toggleButton} handleClick={(label) => this.toggleButton(label)}/>
+                </div>
+                <div className="product-list-height-const">
+                  <ProductTable
+                    products={this.props.products}
+                    handleClick={(i) => this.selectingProduct(i)}
+                    selectedProducts={this.state.selectedProducts}
+                    toggleButton={this.state.toggleButton}
+                    filterText={this.state.filterText}
+                  />
+                </div>
               </div>
+              <div className="col-6">
+                <p className="text-center">Shopping List Preview</p>
+                  <div className="shopping-list-height-const">
+                    <ShoppingList
+                      selectedProducts={this.state.selectedProducts}
+                      products={this.props.products}
+                      handleClick={(i) => this.removeProduct(i)}
+                      counterChange={(i, action) => this.counterChange(i, action)}
+                    />
+                  </div>
+
+                </div>
+              </div>;
+            } else {
+              contentToShow =
+              <div className="row justify-content-center">
+                <div className="only-products-list">
+                  <center>Only Products List to send</center>
+                  <OnlyProducts
+                    selectedProducts={this.state.selectedProducts}
+                    products={this.props.products}
+                  />
+                </div>
+              </div>
+            }
+
+
+
+
+    return (
+      <div className="row">
+        <div className="col">
+          <div className="container" id="app">
+            <div className="row">
+              <div className="col-12 text-center">
+                <h1 className="display-4">
+                  Shopping List App
+                </h1>
+              </div>
+            </div>
+            {contentToShow}
+            <div className="row justify-content-center list-filter-buttons">
+              <button  type="button" className={"btn btn-look"} onClick={() => this.setState({previewShown: !this.state.previewShown})}>{this.whatLabel()}</button>
+              <button  type="button" className={"btn btn-look"} onClick={() => this.setState({selectedProducts: clear, previewShown: !this.state.previewShown})}>Clear</button>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 }
+
+
+
 
 function isClicked(name, list) {
   for (let i= 0; i < list.length; i++) {
@@ -321,8 +457,24 @@ function compareByName(a, b) {
   return 0;
 }
 
+function copyToClipboard(text) {
+  /* Get the text field */
+  var copyText = document.getElementById("myInput");
+
+  /* Select the text field */
+  copyText.select();
+  copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+
+  /* Copy the text inside the text field */
+  document.execCommand("copy");
+
+  /* Alert the copied text */
+  alert("Copied the text: " + copyText.value);
+}
+
 const productsInput = [
   {category: 'Set', name: 'Curry z dynią',
+    ingNam0: 'Olej', ingQty0: '1',
     ingNam1: 'Cebula', ingQty1: '1',
     ingNam2: 'Czosnek', ingQty2: '1',
     ingNam3: 'Pomidory w puszce', ingQty3: '1',
@@ -345,11 +497,13 @@ const productsInput = [
   {category: 'Single', shopPosition1: '1', shopPosition2: '5', name: 'Pietruszka'},
   {category: 'Single', shopPosition1: '8', shopPosition2: '2', name: 'Szczypiorek'},
   {category: 'Set', name: 'Spaghetti',
+    ingNam0: 'Olej', ingQty0: '1',
     ingNam1: 'Cebula', ingQty1: '1',
     ingNam2: 'Czosnek', ingQty2: '1',
     ingNam3: 'Pomidory w puszce', ingQty3: '1',
     ingNam4: 'Mięso mielone', ingQty4: '1'},
   {category: 'Set', name: 'Chilli S. Jurka',
+    ingNam0: 'Olej', ingQty0: '1',
     ingNam1: 'Cebula', ingQty1: '1',
     ingNam2: 'Czosnek', ingQty2: '1',
     ingNam3: 'Pomidory w puszce', ingQty3: '1',

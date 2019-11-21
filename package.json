@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://albatros-code.github.io/shopping-list-app/",
   "dependencies": {
+    "emailjs-com": "^2.4.1",
     "gh-pages": "^2.1.1",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
